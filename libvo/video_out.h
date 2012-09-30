@@ -160,6 +160,11 @@ struct vo;
 struct osd_state;
 struct mp_image;
 
+
+
+/**
+ * As C++ doesn't support designated initializers, when change this also change vo_sage.cpp
+ */
 struct vo_driver {
     // Driver uses new API
     bool is_new;

@@ -42,22 +42,25 @@ static void check_events(void);
 static void uninit(void);
 static int preinit(const char *);
 
+
+// changed to trivial initializers
+//FIXME: do the stuff to be c|c99|c++ independent
 #define LIBVO_EXTERN(x) struct vo_driver video_out_##x =\
 {\
-    .is_new = 0,\
-    .info = &info,\
-    .preinit = old_vo_preinit,\
-    .config = old_vo_config,\
-    .control = old_vo_control,\
-    .draw_slice = old_vo_draw_slice,\
-    .draw_osd = old_vo_draw_osd,\
-    .flip_page = old_vo_flip_page,\
-    .check_events = old_vo_check_events,\
-    .uninit = old_vo_uninit,\
-    .old_functions = &(struct vo_old_functions){\
-	preinit,\
-	config,\
-	control,\
+    is_new : 0,\
+    info : &info,\
+    preinit : old_vo_preinit,\
+    config : old_vo_config,\
+    control : old_vo_control,\
+    draw_slice : old_vo_draw_slice,\
+    draw_osd : old_vo_draw_osd,\
+    flip_page : old_vo_flip_page,\
+    check_events : old_vo_check_events,\
+    uninit : old_vo_uninit,\
+    old_functions : &(struct vo_old_functions){\
+        preinit,\
+        config,\
+        control,\
 	draw_frame,\
 	draw_slice,\
      	draw_osd,\

@@ -420,6 +420,7 @@ Video output:
   --enable-xshape          enable XShape support [autodetect]
   --disable-xss            disable screensaver support via xss [autodetect]
   --enable-fbdev           enable FBDev video output [autodetect]
+  --enable-sage            enable SAGE video otuput [autodetect]
   --enable-3dfx            enable obsolete /dev/3dfx video output [disable]
   --enable-tdfxfb          enable tdfxfb video output [disable]
   --enable-s3fb            enable s3fb (S3 ViRGE) video output [disable]
@@ -513,6 +514,7 @@ Use these options if autodetection fails:
   --extra-libs-mplayer=FLAGS  extra linker flags for MPlayer
 
   --with-sdl-config=PATH      path to sdl*-config
+  --with-sage-dir=PATH        path to SAGE base directory
   --with-dvdnav-config=PATH   path to dvdnav-config
   --with-dvdread-config=PATH  path to dvdread-config
 
@@ -587,6 +589,7 @@ _caca=auto
 _svga=auto
 _vesa=auto
 _fbdev=auto
+_sage=auto
 _dvb=auto
 _dxr3=auto
 _ivtv=auto
@@ -891,6 +894,8 @@ for ac_option do
   --disable-vesa)       _vesa=no        ;;
   --enable-fbdev)       _fbdev=yes      ;;
   --disable-fbdev)      _fbdev=no       ;;
+  --enable-sage)        _sage=yes       ;;
+  --disable-sage)       _sage=no        ;;
   --enable-dvb)         _dvb=yes        ;;
   --disable-dvb)        _dvb=no         ;;
   --enable-dxr3)        _dxr3=yes       ;;
@@ -4204,6 +4209,44 @@ fi
 echores "$_fbdev"
 
 
+echocheck "SAGE"
+if test "$_sage" = yes ; then
+  _force_sage=yes
+  _sage=auto
+fi
+
+_sage_include=""
+
+if test "$_sage" = auto; then
+  _sage=no
+cat >$TMPCPP << EOF
+#include "sail.h"
+#include "misc.h"
+int main(void) {return 0;}
+EOF
+  _lib_tmp="-lsail -lquanta"
+  for _inc_tmp in "$_sagedir" "$SAGE_DIRECTORY"; do
+    if test "$_inc_tmp" != ""; then
+      _lib_tmp="-L$_inc_tmp/lib -lsail -lquanta"
+      _inc_tmp="-I$_inc_tmp/include"
+    fi
+    cxx_check $_lib_tmp $_inc_tmp && _sage=yes && \
+    _sage_include="$_inc_tmp" && \
+    libs_mplayer="$libs_mplayer $_lib_tmp" && break
+  done
+fi
+if test "$_sage" = yes; then
+  def_sage='#define CONFIG_SAGE 1'
+  vomodules="sage $vomodules"
+  extra_ldflags="$extra_ldflags -lstdc++"
+#  _inc_extra="$_inc_extra $SAGE_DIRECTORY/include"
+#  _libs_mplayer="$_libs_mplayer $SAGE_DIRECTORY/lib"
+else
+  def_sage='#undef CONFIG_SAGE'
+  novomodules="sage $novomodules"
+fi
+echores "$_sage"
+
 
 echocheck "DVB"
 if test "$_dvb" = auto ; then
@@ -6372,6 +6415,7 @@ RADIO_CAPTURE=$_radio_capture
 REAL_CODECS = $_real
 RSOUND = $_rsound
 S3FB = $_s3fb
+SAGE = $_sage
 SDL = $_sdl
 SPEEX = $_speex
 STREAM_CACHE = $_stream_cache
@@ -6409,6 +6453,9 @@ YUV4MPEG = $_yuv4mpeg
 # FFmpeg
 FFMPEG_INTERNALS = $ffmpeg_internals
 FFMPEG_SOURCE_PATH = $_ffmpeg_source
+
+# SAGE
+SAGE_INCLUDE = $_sage_include
 
 RANLIB     = $_ranlib
 YASM       = $_yasm
@@ -6709,6 +6756,7 @@ $def_dvb
 $def_dvbin
 $def_dxr3
 $def_fbdev
+$def_sage
 $def_ggi
 $def_ggiwmh
 $def_gif
