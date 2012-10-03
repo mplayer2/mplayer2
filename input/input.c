@@ -145,7 +145,7 @@ static const mp_cmd_t mp_cmds[] = {
   { MP_CMD_ASS_USE_MARGINS, "ass_use_margins", { OARG_INT(-1) } },
 #endif
   { MP_CMD_GET_PERCENT_POS, "get_percent_pos", },
-  { MP_CMD_GET_TIME_POS, "get_time_pos", },
+  { MP_CMD_GET_TIME_POS, "get_time_pos", { OARG_INT(1) }}, // digits after point
   { MP_CMD_GET_TIME_LENGTH, "get_time_length", },
   { MP_CMD_GET_FILENAME, "get_file_name", },
   { MP_CMD_GET_VIDEO_CODEC, "get_video_codec", },
