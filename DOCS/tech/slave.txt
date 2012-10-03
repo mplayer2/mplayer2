@@ -162,8 +162,9 @@ get_sub_visibility
 get_time_length
     Print out the length of the current file in seconds.
 
-get_time_pos
+get_time_pos [precision]
     Print out the current position in the file in seconds, as float.
+    Precision can be 1, 2 or 3 digits after point. Default 1.
 
 get_vo_fullscreen
     Print out fullscreen status (1 == fullscreened, 0 == windowed).
