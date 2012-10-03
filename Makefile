@@ -142,6 +142,7 @@ SRCS_COMMON-$(NETWORKING)            += stream/stream_netstream.c \
                                         stream/realrtsp/sdpplin.c \
                                         stream/realrtsp/xbuffer.c \
 
+SRCS_COMMON-$(UDPDRIVE)              += udp_sync.c
 SRCS_COMMON-$(PNG)                   += libmpcodecs/vd_mpng.c
 SRCS_COMMON-$(PRIORITY)              += osdep/priority.c
 SRCS_COMMON-$(PVR)                   += stream/stream_pvr.c

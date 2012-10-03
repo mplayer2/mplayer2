@@ -237,6 +237,7 @@ void reinit_audio_chain(struct MPContext *mpctx);
 void init_vo_spudec(struct MPContext *mpctx);
 double playing_audio_pts(struct MPContext *mpctx);
 void exit_player_with_rc(struct MPContext *mpctx, enum exit_reason how, int rc);
+void exit_player(struct MPContext *mpctx, enum exit_reason how);
 void add_subtitles(struct MPContext *mpctx, char *filename, float fps, int noerr);
 int reinit_video_chain(struct MPContext *mpctx);
 void pause_player(struct MPContext *mpctx);

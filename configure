@@ -332,6 +332,7 @@ Optional features:
   --disable-pvr          disable Video4Linux2 MPEG PVR [autodetect]
   --disable-rtc          disable RTC (/dev/rtc) on Linux [autodetect]
   --disable-networking   disable networking [enable]
+  --disable-udpdrive     disable network udp slave/master [enable]
   --enable-winsock2_h    enable winsock2_h [autodetect]
   --enable-smb           enable Samba (SMB) input [autodetect]
   --enable-live          enable LIVE555 Streaming Media [disable]
@@ -652,6 +653,7 @@ _tv_bsdbt848=auto
 _tv_dshow=auto
 _pvr=auto
 networking=yes
+_udpdrive=yes
 _winsock2_h=auto
 _smb=auto
 _libquvi=auto
@@ -1012,6 +1014,8 @@ for ac_option do
   --disable-fastmemcpy) _fastmemcpy=no  ;;
   --enable-networking)     networking=yes    ;;
   --disable-networking)    networking=no     ;;
+  --enable-udpdrive)     _udpdrive=yes    ;;
+  --disable-udpdrive)    _udpdrive=no     ;;
   --enable-winsock2_h)  _winsock2_h=yes ;;
   --disable-winsock2_h) _winsock2_h=no  ;;
   --enable-smb)         _smb=yes        ;;
@@ -2912,6 +2916,7 @@ echores "$_closesocket"
 
 
 echocheck "networking"
+def_udpdrive=""
 test $_winsock2_h = no && test $inet_pton = no &&
   test $inet_aton = no && networking=no
 if test "$networking" = yes ; then
@@ -2919,6 +2924,9 @@ if test "$networking" = yes ; then
   def_networking='#define CONFIG_NETWORKING 1'
   extra_ldflags="$extra_ldflags $_ld_sock"
   inputmodules="networking $inputmodules"
+  if test "$_udpdrive" = yes ; then
+    def_udpdrive="#define CONFIG_UDPDRIVE 1"
+  fi
 else
   noinputmodules="networking $noinputmodules"
   def_network='#define CONFIG_NETWORK 0'
@@ -6398,6 +6406,7 @@ MUSEPACK = $_musepack
 NAS = $_nas
 NATIVE_RTSP = $_native_rtsp
 NETWORKING = $networking
+UDPDRIVE = $_udpdrive
 OPENAL = $_openal
 OSS = $_ossaudio
 PE_EXECUTABLE = $_pe_executable
@@ -6732,6 +6741,7 @@ $def_inet_pton
 $def_live
 $def_nemesi
 $def_networking
+$def_udpdrive
 $def_smb
 $def_libquvi
 $def_socklen_t
