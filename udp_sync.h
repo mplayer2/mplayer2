@@ -27,12 +27,16 @@
 // config options for UDP sync
 extern int udp_master;
 extern int udp_slave;
+extern int udp_master_port;
+extern int udp_slave_port;
 extern int udp_port;
+extern int udp_port_range;
 extern const char *udp_ip; // where the master sends datagrams
                            // (can be a broadcast address)
+extern const char *udp_slave_ip; // where the slave reads datagrams
 extern float udp_seek_threshold; // how far off before we seek
 
-void send_udp(MPContext *mpctx,const char *send_to_ip, int port, char *mesg);
+void send_udp(MPContext *mpctx, char *mesg);
 int udp_slave_sync(MPContext *mpctx);
 
 #define MSGTR_InvalidIP "Option -udp-ip: invalid IP address\n"

@@ -708,7 +708,7 @@ static void handle_udp_master(struct MPContext *mpctx,double time)
     if (udp_master) {
         char current_time[256];
         snprintf(current_time, sizeof(current_time), "%f", time);
-        send_udp(mpctx,udp_ip, udp_port, current_time);
+        send_udp(mpctx, current_time);
     }
 #endif /* CONFIG_UDPDRIVE */
 }
@@ -718,7 +718,7 @@ void exit_player_with_rc(struct MPContext *mpctx, enum exit_reason how, int rc)
   
 #ifdef CONFIG_UDPDRIVE
     if (udp_master)
-        send_udp(mpctx,udp_ip, udp_port, "bye");
+        send_udp(mpctx, "bye");
 #endif /* CONFIG_UDPDRIVE */
 
     uninit_player(mpctx, INITIALIZED_ALL);

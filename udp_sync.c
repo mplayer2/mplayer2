@@ -38,6 +38,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #endif /* HAVE_WINSOCK2_H */
+#include<stdlib.h>
 
 #include "mplayer.h"
 #include "libmpdemux/stheader.h"
@@ -47,13 +48,20 @@
 #include "udp_sync.h"
 #include "osdep/timer.h"
 
+#define Malloc(n,t) (t*)malloc((n)*sizeof(t))
+#define Realloc(A,n,t) (t*)realloc(A,(n)*sizeof(t))
+
 
 // config options for UDP sync
 int udp_master = 0;
 int udp_slave  = 0;
+int udp_master_port   = 0;
+int udp_slave_port   = 0;
 int udp_port   = 23867;
+int udp_port_range = 1;//how many ports from *_port includingly are reserved
 const char *udp_ip = "127.0.0.1"; // where the master sends datagrams
                                   // (can be a broadcast address)
+const char *udp_slave_ip = "0.0.0.0"; // where the slave reads datagrams
 float udp_seek_threshold = 0.2;   // how far off before we seek
 
 // how far off is still considered equal
@@ -103,18 +111,28 @@ static int get_udp(MPContext *mpctx,int blocking, double *master_position)
         struct timeval tv = { .tv_sec = 30 };
 #endif
         struct sockaddr_in servaddr = { 0 };
+	int i;
 
         startup();
         sockfd = socket(AF_INET, SOCK_DGRAM, 0);
         if (sockfd == -1)
             return -1;
 
-        servaddr.sin_family      = AF_INET;
-        servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        servaddr.sin_port        = htons(udp_port);
-        bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
-
         setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+	udp_slave_port=udp_slave_port?udp_slave_port:udp_port;
+
+        
+        for(i=0;i<udp_port_range;++i){
+	  servaddr.sin_family      = AF_INET;
+	  servaddr.sin_addr.s_addr = inet_addr(udp_slave_ip);//htonl(INADDR_ANY);
+	  servaddr.sin_port= htons(udp_slave_port+i);
+	  
+	  if(!bind(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr))){
+	    fprintf(stderr,"Port %d, bind successful",udp_slave_port+i);
+	    break;
+	  }else
+	    fprintf(stderr,"Port %d, ",udp_slave_port+i);perror("bind");
+	}
 
     }
 
@@ -143,41 +161,52 @@ static int get_udp(MPContext *mpctx,int blocking, double *master_position)
     return 0;
 }
 
-void send_udp(MPContext *mpctx,const char *send_to_ip, int port, char *mesg)
+void send_udp(MPContext *mpctx, char *mesg)
 {
-    static int sockfd = -1;
-    static struct sockaddr_in socketinfo;
+    static int *sockfd = NULL;
+    static struct sockaddr_in *socketinfo;
+    int i;
 
-    if (sockfd == -1) {
+    if (!sockfd) {
         static const int one = 1;
         int ip_valid = 0;
 
         startup();
-        sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-        if (sockfd == -1)
-            exit_player(mpctx,EXIT_ERROR);
+	sockfd=Malloc(udp_port_range,int);
+	socketinfo=Malloc(udp_port_range,struct sockaddr_in);
+	udp_master_port=udp_master_port?udp_master_port:udp_port;
+	for(i=0;i<udp_port_range;++i){
+	  sockfd[i]=-1;
+	  sockfd[i] = socket(AF_INET, SOCK_DGRAM, 0);
+// 	  if (sockfd == -1)
+// 	      exit_player(mpctx,EXIT_ERROR);
+	  if(sockfd[i]!=-1){
+	    // Enable broadcast
+	    setsockopt(sockfd[i], SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
 
-        // Enable broadcast
-        setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
+    #if HAVE_WINSOCK2_H
+	    socketinfo[i].sin_addr.s_addr = inet_addr(udp_ip);
+	    ip_valid = socketinfo[i].sin_addr.s_addr != INADDR_NONE;
+    #else
+	    ip_valid = inet_aton(udp_ip, &socketinfo[i].sin_addr);
+    #endif
 
-#if HAVE_WINSOCK2_H
-        socketinfo.sin_addr.s_addr = inet_addr(send_to_ip);
-        ip_valid = socketinfo.sin_addr.s_addr != INADDR_NONE;
-#else
-        ip_valid = inet_aton(send_to_ip, &socketinfo.sin_addr);
-#endif
+	    if (!ip_valid) {
+		mp_msg(MSGT_CPLAYER, MSGL_FATAL, MSGTR_InvalidIP);
+		exit_player(mpctx,EXIT_ERROR);
+	    }
 
-        if (!ip_valid) {
-            mp_msg(MSGT_CPLAYER, MSGL_FATAL, MSGTR_InvalidIP);
-            exit_player(mpctx,EXIT_ERROR);
-        }
-
-        socketinfo.sin_family = AF_INET;
-        socketinfo.sin_port   = htons(port);
+	    socketinfo[i].sin_family = AF_INET;
+	    fprintf(stderr,"%d port reserved.\n",udp_master_port+i);
+	    socketinfo[i].sin_port   = htons(udp_master_port+i);
+	  }
+	}
     }
 
-    sendto(sockfd, mesg, strlen(mesg), 0, (struct sockaddr *) &socketinfo,
-           sizeof(socketinfo));
+    for(i=0;i<udp_port_range;++i){
+      if(sockfd[i]!=-1)	sendto(sockfd[i], mesg, strlen(mesg), 0, (struct sockaddr *) &socketinfo[i],
+	     sizeof(socketinfo[i]));
+    }
 }
 
 // this function makes sure we stay as close as possible to the master's

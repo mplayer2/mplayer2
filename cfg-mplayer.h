@@ -480,7 +480,11 @@ const m_option_t common_opts[] = {
     {"udp-slave", &udp_slave, CONF_TYPE_FLAG, 0, 0, 1, NULL},
     {"udp-master", &udp_master, CONF_TYPE_FLAG, 0, 0, 1, NULL},
     {"udp-ip", &udp_ip, CONF_TYPE_STRING, 0, 0, 1, NULL},
+    {"udp-slave-ip", &udp_slave_ip, CONF_TYPE_STRING, 0, 0, 1, NULL},
     {"udp-port", &udp_port, CONF_TYPE_INT, 0, 1, 65535, NULL},
+    {"udp-port-range", &udp_port_range, CONF_TYPE_INT, 0, 1, 500, NULL},
+    {"udp-master-port", &udp_master_port, CONF_TYPE_INT, 0, 1, 65535, NULL},
+    {"udp-slave-port", &udp_slave_port, CONF_TYPE_INT, 0, 1, 65535, NULL},
     {"udp-seek-threshold", &udp_seek_threshold, CONF_TYPE_FLOAT, CONF_RANGE, 0.1, 100, NULL},
 #endif /* CONFIG_UDPDRIVE */
 
