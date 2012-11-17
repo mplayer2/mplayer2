@@ -486,6 +486,7 @@ const m_option_t common_opts[] = {
     {"udp-master-port", &udp_master_port, CONF_TYPE_INT, 0, 1, 65535, NULL},
     {"udp-slave-port", &udp_slave_port, CONF_TYPE_INT, 0, 1, 65535, NULL},
     {"udp-seek-threshold", &udp_seek_threshold, CONF_TYPE_FLOAT, CONF_RANGE, 0.1, 100, NULL},
+    {"udp-multicast", "Multicast udp system supported.\n", CONF_TYPE_PRINT, 0, 0, 0, NULL},
 #endif /* CONFIG_UDPDRIVE */
 
 // ------------------------- demuxer options --------------------
