@@ -162,6 +162,9 @@ static int max_framesize = 0;
 #include "libmpdemux/demuxer.h"
 #include "libmpdemux/stheader.h"
 
+
+#include "udp_sync.h"
+
 #ifdef CONFIG_DVDREAD
 #include "stream/stream_dvd.h"
 #endif
@@ -226,6 +229,9 @@ static const char help_text[] = _(
 "- MPlayer crashed by an 'Illegal Instruction'.\n"\
 "  It may be a bug in our new runtime CPU-detection code...\n"\
 "  Please read DOCS/HTML/en/bugreports.html.\n")
+
+#define Exit_slave _(\
+"Option -udp-slave: exiting because master exited\n")
 
 #define Exit_SIGILL _(\
 "- MPlayer crashed by an 'Illegal Instruction'.\n"\
@@ -695,8 +701,26 @@ void uninit_player(struct MPContext *mpctx, unsigned int mask)
     current_module = NULL;
 }
 
+
+static void handle_udp_master(struct MPContext *mpctx,double time)
+{
+#ifdef CONFIG_UDPDRIVE
+    if (udp_master) {
+        char current_time[256];
+        snprintf(current_time, sizeof(current_time), "%f", time);
+        send_udp(mpctx, current_time);
+    }
+#endif /* CONFIG_UDPDRIVE */
+}
+
 void exit_player_with_rc(struct MPContext *mpctx, enum exit_reason how, int rc)
 {
+  
+#ifdef CONFIG_UDPDRIVE
+    if (udp_master)
+        send_udp(mpctx, "bye");
+#endif /* CONFIG_UDPDRIVE */
+
     uninit_player(mpctx, INITIALIZED_ALL);
 #if defined(__MINGW32__) || defined(__CYGWIN__)
     timeEndPeriod(1);
@@ -764,7 +788,7 @@ void exit_player_with_rc(struct MPContext *mpctx, enum exit_reason how, int rc)
     exit(rc);
 }
 
-static void exit_player(struct MPContext *mpctx, enum exit_reason how)
+void exit_player(struct MPContext *mpctx, enum exit_reason how)
 {
     exit_player_with_rc(mpctx, how, 1);
 }
@@ -3577,6 +3601,18 @@ static void run_playloop(struct MPContext *mpctx)
         vf->control(vf, VFCTRL_DRAW_OSD, mpctx->osd);
         vo_osd_changed(0);
 
+	
+#ifdef CONFIG_UDPDRIVE
+	if (udp_slave) {
+	    int udp_master_exited = udp_slave_sync(mpctx);
+	    if (udp_master_exited > 0) {
+		mp_msg(MSGT_CPLAYER, MSGL_INFO, Exit_slave);
+		exit_player(mpctx,EXIT_QUIT);
+	    }/* else if (udp_master_exited == 0)
+		return 0;*/
+	}
+#endif /* CONFIG_UDPDRIVE */
+
         mpctx->time_frame -= get_relative_time(mpctx);
         mpctx->time_frame -= vo->flip_queue_offset;
         float aq_sleep_time = mpctx->time_frame;
@@ -3606,6 +3642,8 @@ static void run_playloop(struct MPContext *mpctx)
                 diff = 10;
             duration = diff * 1e6;
         }
+        handle_udp_master(mpctx,mpctx->sh_video->pts);
+	
         vo_flip_page(vo, pts_us | 1, duration);
 
         mpctx->last_vo_flip_duration = (GetTimer() - t2) * 0.000001;
@@ -4951,9 +4989,11 @@ goto_enable_cache:
     mpctx->seek = (struct seek_params){ 0 };
     get_relative_time(mpctx); // reset current delta
     // Make sure VO knows current pause state
-    if (mpctx->sh_video)
+    if (mpctx->sh_video){
         vo_control(mpctx->video_out,
                    mpctx->paused ? VOCTRL_PAUSE : VOCTRL_RESUME, NULL);
+	handle_udp_master(mpctx,mpctx->sh_video->pts);
+    }
 
     while (!mpctx->stop_play)
         run_playloop(mpctx);

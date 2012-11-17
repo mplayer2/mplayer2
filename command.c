@@ -3479,7 +3479,17 @@ void run_command(MPContext *mpctx, mp_cmd_t *cmd)
 
     case MP_CMD_GET_TIME_POS: {
         float pos = get_current_time(mpctx);
-        mp_msg(MSGT_GLOBAL, MSGL_INFO, "ANS_TIME_POSITION=%.1f\n", pos);
+	int df=cmd->args[0].v.i;
+	//it is faster to use 3 if's then to do real string making
+	/* code for understanding next code lines
+	if(df>3) df=3; if(df<1) df=1;//other precisions are useless
+	char* fmt1="ANS_TIME_POSITION=%%.%df\n",*fmt2;
+	fmt2=talloc_asprintf(NULL, fmt1, df);
+        mp_msg(MSGT_GLOBAL, MSGL_INFO, fmt2, pos);
+         */
+	if(df==1)	mp_msg(MSGT_GLOBAL, MSGL_INFO, "ANS_TIME_POSITION=%.1f\n", pos);//standard
+	else if(df==2)	mp_msg(MSGT_GLOBAL, MSGL_INFO, "ANS_TIME_POSITION=%.2f\n", pos);
+	else		mp_msg(MSGT_GLOBAL, MSGL_INFO, "ANS_TIME_POSITION=%.3f\n", pos);//msec
         break;
     }
 

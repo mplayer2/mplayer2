@@ -332,6 +332,7 @@ Optional features:
   --disable-pvr          disable Video4Linux2 MPEG PVR [autodetect]
   --disable-rtc          disable RTC (/dev/rtc) on Linux [autodetect]
   --disable-networking   disable networking [enable]
+  --disable-udpdrive     disable network udp slave/master [enable]
   --enable-winsock2_h    enable winsock2_h [autodetect]
   --enable-smb           enable Samba (SMB) input [autodetect]
   --enable-live          enable LIVE555 Streaming Media [disable]
@@ -420,6 +421,7 @@ Video output:
   --enable-xshape          enable XShape support [autodetect]
   --disable-xss            disable screensaver support via xss [autodetect]
   --enable-fbdev           enable FBDev video output [autodetect]
+  --enable-sage            enable SAGE video otuput [autodetect]
   --enable-3dfx            enable obsolete /dev/3dfx video output [disable]
   --enable-tdfxfb          enable tdfxfb video output [disable]
   --enable-s3fb            enable s3fb (S3 ViRGE) video output [disable]
@@ -513,6 +515,7 @@ Use these options if autodetection fails:
   --extra-libs-mplayer=FLAGS  extra linker flags for MPlayer
 
   --with-sdl-config=PATH      path to sdl*-config
+  --with-sage-dir=PATH        path to SAGE base directory
   --with-dvdnav-config=PATH   path to dvdnav-config
   --with-dvdread-config=PATH  path to dvdread-config
 
@@ -587,6 +590,7 @@ _caca=auto
 _svga=auto
 _vesa=auto
 _fbdev=auto
+_sage=auto
 _dvb=auto
 _dxr3=auto
 _ivtv=auto
@@ -649,6 +653,7 @@ _tv_bsdbt848=auto
 _tv_dshow=auto
 _pvr=auto
 networking=yes
+_udpdrive=yes
 _winsock2_h=auto
 _smb=auto
 _libquvi=auto
@@ -891,6 +896,8 @@ for ac_option do
   --disable-vesa)       _vesa=no        ;;
   --enable-fbdev)       _fbdev=yes      ;;
   --disable-fbdev)      _fbdev=no       ;;
+  --enable-sage)        _sage=yes       ;;
+  --disable-sage)       _sage=no        ;;
   --enable-dvb)         _dvb=yes        ;;
   --disable-dvb)        _dvb=no         ;;
   --enable-dxr3)        _dxr3=yes       ;;
@@ -1007,6 +1014,8 @@ for ac_option do
   --disable-fastmemcpy) _fastmemcpy=no  ;;
   --enable-networking)     networking=yes    ;;
   --disable-networking)    networking=no     ;;
+  --enable-udpdrive)     _udpdrive=yes    ;;
+  --disable-udpdrive)    _udpdrive=no     ;;
   --enable-winsock2_h)  _winsock2_h=yes ;;
   --disable-winsock2_h) _winsock2_h=no  ;;
   --enable-smb)         _smb=yes        ;;
@@ -2907,6 +2916,7 @@ echores "$_closesocket"
 
 
 echocheck "networking"
+def_udpdrive=""
 test $_winsock2_h = no && test $inet_pton = no &&
   test $inet_aton = no && networking=no
 if test "$networking" = yes ; then
@@ -2914,6 +2924,9 @@ if test "$networking" = yes ; then
   def_networking='#define CONFIG_NETWORKING 1'
   extra_ldflags="$extra_ldflags $_ld_sock"
   inputmodules="networking $inputmodules"
+  if test "$_udpdrive" = yes ; then
+    def_udpdrive="#define CONFIG_UDPDRIVE 1"
+  fi
 else
   noinputmodules="networking $noinputmodules"
   def_network='#define CONFIG_NETWORK 0'
@@ -4203,6 +4216,44 @@ else
 fi
 echores "$_fbdev"
 
+
+echocheck "SAGE"
+if test "$_sage" = yes ; then
+  _force_sage=yes
+  _sage=auto
+fi
+
+_sage_include=""
+
+if test "$_sage" = auto; then
+  _sage=no
+cat >$TMPCPP << EOF
+#include "sail.h"
+#include "misc.h"
+int main(void) {return 0;}
+EOF
+  _lib_tmp="-lsail -lquanta"
+  for _inc_tmp in "$_sagedir" "$SAGE_DIRECTORY"; do
+    if test "$_inc_tmp" != ""; then
+      _lib_tmp="-L$_inc_tmp/lib -lsail -lquanta"
+      _inc_tmp="-I$_inc_tmp/include"
+    fi
+    cxx_check $_lib_tmp $_inc_tmp && _sage=yes && \
+    _sage_include="$_inc_tmp" && \
+    libs_mplayer="$libs_mplayer $_lib_tmp" && break
+  done
+fi
+if test "$_sage" = yes; then
+  def_sage='#define CONFIG_SAGE 1'
+  vomodules="sage $vomodules"
+  extra_ldflags="$extra_ldflags -lstdc++"
+#  _inc_extra="$_inc_extra $SAGE_DIRECTORY/include"
+#  _libs_mplayer="$_libs_mplayer $SAGE_DIRECTORY/lib"
+else
+  def_sage='#undef CONFIG_SAGE'
+  novomodules="sage $novomodules"
+fi
+echores "$_sage"
 
 
 echocheck "DVB"
@@ -6355,6 +6406,7 @@ MUSEPACK = $_musepack
 NAS = $_nas
 NATIVE_RTSP = $_native_rtsp
 NETWORKING = $networking
+UDPDRIVE = $_udpdrive
 OPENAL = $_openal
 OSS = $_ossaudio
 PE_EXECUTABLE = $_pe_executable
@@ -6372,6 +6424,7 @@ RADIO_CAPTURE=$_radio_capture
 REAL_CODECS = $_real
 RSOUND = $_rsound
 S3FB = $_s3fb
+SAGE = $_sage
 SDL = $_sdl
 SPEEX = $_speex
 STREAM_CACHE = $_stream_cache
@@ -6409,6 +6462,9 @@ YUV4MPEG = $_yuv4mpeg
 # FFmpeg
 FFMPEG_INTERNALS = $ffmpeg_internals
 FFMPEG_SOURCE_PATH = $_ffmpeg_source
+
+# SAGE
+SAGE_INCLUDE = $_sage_include
 
 RANLIB     = $_ranlib
 YASM       = $_yasm
@@ -6685,6 +6741,7 @@ $def_inet_pton
 $def_live
 $def_nemesi
 $def_networking
+$def_udpdrive
 $def_smb
 $def_libquvi
 $def_socklen_t
@@ -6709,6 +6766,7 @@ $def_dvb
 $def_dvbin
 $def_dxr3
 $def_fbdev
+$def_sage
 $def_ggi
 $def_ggiwmh
 $def_gif

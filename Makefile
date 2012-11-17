@@ -142,6 +142,7 @@ SRCS_COMMON-$(NETWORKING)            += stream/stream_netstream.c \
                                         stream/realrtsp/sdpplin.c \
                                         stream/realrtsp/xbuffer.c \
 
+SRCS_COMMON-$(UDPDRIVE)              += udp_sync.c
 SRCS_COMMON-$(PNG)                   += libmpcodecs/vd_mpng.c
 SRCS_COMMON-$(PRIORITY)              += osdep/priority.c
 SRCS_COMMON-$(PVR)                   += stream/stream_pvr.c
@@ -469,6 +470,7 @@ SRCS_MPLAYER-$(PULSE)         += libao2/ao_pulse.c
 SRCS_MPLAYER-$(PORTAUDIO)     += libao2/ao_portaudio.c
 SRCS_MPLAYER-$(RSOUND)        += libao2/ao_rsound.c
 SRCS_MPLAYER-$(S3FB)          += libvo/vo_s3fb.c
+SRCS_MPLAYER-$(SAGE)          += libvo/vo_sage.cpp
 SRCS_MPLAYER-$(SDL)           += libao2/ao_sdl.c libvo/vo_sdl.c libvo/sdl_common.c
 SRCS_MPLAYER-$(SUNAUDIO)      += libao2/ao_sun.c
 SRCS_MPLAYER-$(SVGA)          += libvo/vo_svga.c
@@ -649,6 +651,10 @@ osdep/mplayer-rc.o: osdep/mplayer.exe.manifest
 libdvdcss/%:   CFLAGS := -Ilibdvdcss -D_GNU_SOURCE -DVERSION=\"1.2.10\" $(CFLAGS_LIBDVDCSS) $(CFLAGS)
 libdvdnav/%:   CFLAGS := -Ilibdvdnav -D_GNU_SOURCE -DHAVE_CONFIG_H -DVERSION=\"MPlayer-custom\" $(CFLAGS)
 libdvdread4/%: CFLAGS := -Ilibdvdread4 -D_GNU_SOURCE $(CFLAGS_LIBDVDCSS_DVDREAD) $(CFLAGS)
+
+#SAGE includes
+libvo/vo_sage.o: CXXFLAGS := $(SAGE_INCLUDE) $(CXXFLAGS)
+libvo/vo_sage.o: EXTRALIBS := -lstdc++ $(EXTRALIBS)
 
 loader/%: CFLAGS += -fno-omit-frame-pointer $(CFLAGS_NO_OMIT_LEAF_FRAME_POINTER)
 #loader/%: CFLAGS += -Ddbg_printf=__vprintf -DTRACE=__vprintf -DDETAILED_OUT

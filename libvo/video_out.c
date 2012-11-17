@@ -89,6 +89,7 @@ extern struct vo_driver video_out_sdl;
 extern struct vo_driver video_out_3dfx;
 extern struct vo_driver video_out_tdfxfb;
 extern struct vo_driver video_out_s3fb;
+extern struct vo_driver video_out_sage;
 extern struct vo_driver video_out_wii;
 extern struct vo_driver video_out_null;
 extern struct vo_driver video_out_bl;
@@ -154,6 +155,9 @@ const struct vo_driver *video_out_drivers[] =
 #endif
 #ifdef CONFIG_S3FB
         &video_out_s3fb,
+#endif
+#ifdef CONFIG_SAGE
+        &video_out_sage,
 #endif
 #ifdef CONFIG_WII
         &video_out_wii,
